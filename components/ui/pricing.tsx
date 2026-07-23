@@ -189,6 +189,7 @@ export interface PricingPlan {
   name: string;
   price: string;
   period: string;
+  priceNote?: string;
   features: string[];
   description: string;
   buttonText: string;

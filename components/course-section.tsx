@@ -34,6 +34,7 @@ const plans: PricingPlan[] = [
   },
   {
     name: "TradingView EA's",
+    price: "0",
     period: "to be announced",
     priceNote: "Launching soon",
     description: "Expert advisors & indicators for hands-free trading",
