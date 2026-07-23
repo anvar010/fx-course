@@ -5,7 +5,7 @@ import { Testimonials } from "@/components/ui/testimonials-demo";
 const plans: PricingPlan[] = [
   {
     name: COURSES.recorded.name,
-    price: COURSES.recorded.amount,
+    price: String(COURSES.recorded.amount),
     period: "one-time",
     priceNote: COURSES.recorded.priceNote,
     description: COURSES.recorded.sub,
@@ -19,7 +19,7 @@ const plans: PricingPlan[] = [
   },
   {
     name: COURSES.live.name,
-    price: COURSES.live.amount,
+    price: String(COURSES.live.amount),
     period: "one-time",
     priceNote: COURSES.live.priceNote,
     description: COURSES.live.sub,
