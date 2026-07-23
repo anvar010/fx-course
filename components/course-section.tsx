@@ -1,5 +1,6 @@
 import { PricingSection, type PricingPlan } from "@/components/ui/pricing";
 import { COURSES } from "@/lib/courses";
+import { Testimonials } from "@/components/ui/testimonials-demo";
 
 const plans: PricingPlan[] = [
   {
@@ -54,6 +55,7 @@ export function CourseSection() {
         title="Enroll in the XAUUSD Course"
         description="Learn to trade gold with a proven strategy — pick the format that suits your schedule."
       />
+      <Testimonials />
     </section>
   );
 }

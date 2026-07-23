@@ -2,20 +2,30 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { QRCodeCanvas } from "qrcode.react";
 import { ArrowLeft } from "lucide-react";
 import { OrderConfirmationCard } from "@/components/ui/order-confirmation-card";
 import { Navbar } from "@/components/navbar";
-import { addEnrollment } from "@/lib/enrollments";
 import { CONFIG, COURSES, upiLink, whatsappLink, type CourseKey } from "@/lib/courses";
 
 export function EnrollView({ courseKey }: { courseKey: CourseKey }) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const course = COURSES[courseKey];
   const [confirmation, setConfirmation] = useState<{ orderId: string; dateTime: string } | null>(
     null
   );
+  const [loading, setLoading] = useState(false);
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    setLoading(true);
     const orderId = `XAU-${Date.now().toString().slice(-8)}`;
     const dateTime = new Date().toLocaleString("en-IN", {
       day: "2-digit",
@@ -24,15 +34,31 @@ export function EnrollView({ courseKey }: { courseKey: CourseKey }) {
       hour: "2-digit",
       minute: "2-digit",
     });
-    addEnrollment({
-      courseKey,
-      courseName: course.name,
-      amount: course.amount,
-      orderId,
-      dateTime,
-    });
-    setConfirmation({ orderId, dateTime });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    try {
+      const res = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseKey,
+          courseName: course.name,
+          amount: course.amount,
+          orderId,
+        }),
+      });
+
+      if (res.ok) {
+        setConfirmation({ orderId, dateTime });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error submitting enrollment.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -160,12 +186,22 @@ export function EnrollView({ courseKey }: { courseKey: CourseKey }) {
                   </a>
 
                   <div className="mt-4">
-                    <button
-                      onClick={confirmPayment}
-                      className="w-full rounded-xl bg-gradient-to-r from-gold to-gold-light px-6 py-3.5 font-bold text-[#1a1405] hover:brightness-110 transition active:scale-[0.98] cursor-pointer"
-                    >
-                      I&apos;ve Completed the Payment ✓
-                    </button>
+                    {!session ? (
+                      <Link
+                        href="/login"
+                        className="flex w-full items-center justify-center rounded-xl bg-white/10 px-6 py-3.5 font-bold text-white hover:bg-white/20 transition cursor-pointer"
+                      >
+                        Log In to Enroll
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={confirmPayment}
+                        disabled={loading}
+                        className="w-full rounded-xl bg-gradient-to-r from-gold to-gold-light px-6 py-3.5 font-bold text-[#1a1405] hover:brightness-110 transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "I've Completed the Payment ✓"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

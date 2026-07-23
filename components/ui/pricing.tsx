@@ -1,14 +1,22 @@
 "use client";
 
 import { motion, useSpring } from "framer-motion";
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+} from "react";
 import Link from "next/link";
 import { Check, Star as LucideStar } from "lucide-react";
 import NumberFlow from "@number-flow/react";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-// --- HOOKS ---
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export function useMediaQuery(query: string) {
   const [value, setValue] = useState(false);
@@ -17,18 +25,60 @@ export function useMediaQuery(query: string) {
     function onChange(event: MediaQueryListEvent) {
       setValue(event.matches);
     }
-
     const result = matchMedia(query);
     result.addEventListener("change", onChange);
     setValue(result.matches);
-
     return () => result.removeEventListener("change", onChange);
   }, [query]);
 
   return value;
 }
 
-// --- INTERACTIVE STARFIELD ---
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Button.displayName = "Button";
 
 function Star({
   mousePosition,
@@ -69,7 +119,7 @@ function Star({
     const deltaY = mousePosition.y - starY;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    const radius = 600; // Radius of magnetic influence
+    const radius = 600;
 
     if (distance < radius) {
       const force = 1 - distance / radius;
@@ -85,7 +135,7 @@ function Star({
 
   return (
     <motion.div
-      className="absolute bg-gold-light rounded-full"
+      className="absolute bg-foreground rounded-full"
       style={{
         top: initialPos.top,
         left: initialPos.left,
@@ -112,6 +162,16 @@ function InteractiveStarfield({
   mousePosition: { x: number | null; y: number | null };
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" />;
+  }
+
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
       {Array.from({ length: 150 }).map((_, i) => (
@@ -125,12 +185,9 @@ function InteractiveStarfield({
   );
 }
 
-// --- PRICING COMPONENT LOGIC ---
-
 export interface PricingPlan {
   name: string;
-  /** Price in INR. Omit for "coming soon" plans — a ₹— placeholder is shown instead. */
-  price?: number;
+  price: string;
   period: string;
   features: string[];
   description: string;
@@ -138,17 +195,14 @@ export interface PricingPlan {
   href?: string;
   isPopular?: boolean;
   comingSoon?: boolean;
-  /** Small note under the price, e.g. "Limited seats per batch" */
-  priceNote?: string;
 }
 
-interface PricingSectionProps {
+export interface PricingSectionProps {
   plans: PricingPlan[];
   title?: string;
   description?: string;
 }
 
-// Main PricingSection Component
 export function PricingSection({
   plans,
   title = "Simple, Transparent Pricing",
@@ -170,7 +224,7 @@ export function PricingSection({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setMousePosition({ x: null, y: null })}
-      className="relative w-full bg-background py-20 sm:py-24"
+      className="relative w-full bg-background dark:bg-neutral-950 py-20 sm:py-24"
     >
       <InteractiveStarfield
         mousePosition={mousePosition}
@@ -178,16 +232,16 @@ export function PricingSection({
       />
       <div className="relative z-10 container mx-auto px-4 md:px-6">
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-12">
-          <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-foreground">
+          <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-neutral-900 dark:text-white">
             {title}
           </h2>
           <p className="text-muted-foreground text-lg whitespace-pre-line">
             {description}
           </p>
         </div>
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-8 max-w-5xl mx-auto">
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-start gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
-            <PricingCard key={plan.name} plan={plan} index={index} />
+            <PricingCard key={index} plan={plan} index={index} />
           ))}
         </div>
       </div>
@@ -195,12 +249,16 @@ export function PricingSection({
   );
 }
 
-// Pricing Card Component
 function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
   return (
     <motion.div
       initial={{ y: 50, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
+      whileInView={{
+        y: plan.isPopular && isDesktop ? -20 : 0,
+        opacity: 1,
+      }}
       viewport={{ once: true }}
       transition={{
         duration: 0.6,
@@ -210,12 +268,10 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         delay: index * 0.15,
       }}
       className={cn(
-        "rounded-2xl p-6 flex flex-col relative h-full bg-background/70 backdrop-blur-sm",
+        "rounded-2xl p-8 flex flex-col relative bg-background/70 backdrop-blur-sm h-full",
         plan.isPopular
           ? "border-2 border-primary shadow-[0_16px_50px_rgba(212,175,55,0.15)]"
-          : plan.comingSoon
-            ? "border border-dashed border-gold/30"
-            : "border border-border",
+          : "border border-border",
       )}
     >
       {plan.isPopular && (
@@ -228,15 +284,6 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
           </div>
         </div>
       )}
-      {plan.comingSoon && (
-        <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
-          <div className="border border-gold/40 bg-background py-1.5 px-4 rounded-full">
-            <span className="text-gold text-sm font-semibold whitespace-nowrap">
-              Coming Soon
-            </span>
-          </div>
-        </div>
-      )}
       <div className="flex-1 flex flex-col text-center">
         <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -244,27 +291,20 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         </p>
         <div className="mt-6 flex items-baseline justify-center gap-x-1">
           <span className="text-5xl font-bold tracking-tight text-foreground">
-            {plan.price != null ? (
-              <NumberFlow
-                value={plan.price}
-                format={{
-                  style: "currency",
-                  currency: "INR",
-                  minimumFractionDigits: 0,
-                }}
-                className="tabular-nums"
-              />
-            ) : (
-              <span className="text-muted-foreground">₹—</span>
-            )}
+            <NumberFlow
+              value={Number(plan.price)}
+              format={{
+                style: "currency",
+                currency: "USD",
+                minimumFractionDigits: 0,
+              }}
+              className="tabular-nums"
+            />
           </span>
           <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
             / {plan.period}
           </span>
         </div>
-        {plan.priceNote && (
-          <p className="text-xs text-muted-foreground mt-2">{plan.priceNote}</p>
-        )}
 
         <ul
           role="list"

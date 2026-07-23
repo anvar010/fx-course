@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  password    String
+  role        String       @default("STUDENT") // STUDENT or ADMIN
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  enrollments Enrollment[]
+}
+
+model Enrollment {
+  id                   String   @id @default(cuid())
+  courseKey            String   // "live" or "recorded"
+  courseName           String
+  amount               Int
+  status               String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  orderId              String   @unique
+  paymentScreenshotUrl String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  courseKey   String   // "live" or "recorded"
+  lessonTitle String   // Matches the title in lib/courses.ts
+  filename    String
+  filepath    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
