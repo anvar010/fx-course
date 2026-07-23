@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Lock, ShieldAlert } from "lucide-react";
+import { Lock, ShieldAlert, User } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -54,18 +54,23 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">
-              Admin Email
-            </label>
-            <div className="relative">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white placeholder-white/20 focus:border-red-500/50 focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-red-500/10 transition-all"
-                placeholder="admin@nikkifx.com"
-              />
+            <div>
+              <label className="block text-sm font-medium text-white/60 mb-2">
+                Admin Username
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-red-500/50" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 bg-white/5 border border-white/10 rounded-xl py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
+                  placeholder="admin"
+                />
+              </div>
             </div>
           </div>
           
